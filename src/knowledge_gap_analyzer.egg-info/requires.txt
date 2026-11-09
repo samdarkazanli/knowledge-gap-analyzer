@@ -1,5 +1,0 @@
-openai<4,>=1.42
-pydantic<3,>=2
-
-[test]
-pytest<10,>=8

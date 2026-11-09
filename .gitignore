@@ -13,3 +13,13 @@ output/
 # Editor files
 .vscode/
 .idea/
+info
+
+# Local Codex session
+/info
+
+# Generated Python packaging metadata
+*.egg-info/
+dist/
+build/
+/corpus/pinup/
