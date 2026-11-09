@@ -1,0 +1,14 @@
+[console_scripts]
+kga = kga.cli:main
+kga-changes-init = kga.changes_init_cli:main
+kga-changes-validate = kga.changes_validate_cli:main
+kga-consolidate = kga.consolidation_cli:main
+kga-evaluate = kga.evaluation_cli:main
+kga-model = kga.model_cli:main
+kga-questions = kga.question_cli:main
+kga-report = kga.report_cli:main
+kga-review-export = kga.review_export_cli:main
+kga-review-init = kga.review_init_cli:main
+kga-review-validate = kga.review_validate_cli:main
+kga-tasks = kga.tasks_cli:main
+kga-verify = kga.verify_cli:main

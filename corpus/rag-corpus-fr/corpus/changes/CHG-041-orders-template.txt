@@ -1,0 +1,10 @@
+Changement : CHG-041
+Date : 26/07/2026
+Application : orders
+
+Mise à jour du template orders-logs-template.
+Une erreur dans la modification a retiré index.lifecycle.rollover_alias.
+
+Le changement a été identifié le lendemain comme origine de INC-004.
+Action corrective : restaurer la propriété et ajouter un contrôle automatique
+dans la pipeline de déploiement.

@@ -1,0 +1,13 @@
+Incident : INC-006
+Date : 11/08/2026
+Application : catalogue
+Système : Elasticsearch
+Statut : RÉSOLU
+
+es-node-03 a dépassé le flood-stage watermark. Plusieurs index catalogue ont
+reçu index.blocks.read_only_allow_delete=true et les écritures ont échoué.
+
+Après libération d'espace disque et retour sous les seuils, les blocs ont été
+levés conformément à la procédure.
+
+Cause confirmée : saturation disque au flood stage.

@@ -1,0 +1,13 @@
+Incident : INC-005
+Date : 05/08/2026
+Application : payments
+Système : Elasticsearch
+Statut : RÉSOLU
+
+Plusieurs requêtes payments ont dépassé 4 secondes. JVM memory pressure a
+atteint 91 % sur es-node-12.
+
+Cause confirmée : une agrégation à très forte cardinalité déployée dans une
+nouvelle requête analytique. La requête a été corrigée.
+
+Aucun blocage ILM et aucune anomalie de l'alias payments-write.

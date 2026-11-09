@@ -1,0 +1,15 @@
+Incident : INC-002
+Date : 03/07/2026
+Application : customer-search
+Système : Elasticsearch
+Statut : RÉSOLU — rapport final
+
+Le nœud es-node-07 a dépassé le high disk watermark.
+L'allocation de shards a été perturbée et le cluster est passé en jaune.
+
+Après validation avec l'équipe applicative, plusieurs anciens index de test
+ont été supprimés. L'utilisation disque est repassée sous le seuil high et
+l'allocation des shards a repris.
+
+Cause confirmée : pression disque sur es-node-07.
+Cet incident est sans lien avec la configuration d'un alias ILM.

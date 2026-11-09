@@ -1,0 +1,9 @@
+FAQ interne : Alias Elasticsearch
+
+Un alias peut pointer vers plusieurs index. Pour certaines opérations d'écriture
+et pour le rollover, un write index explicite peut être nécessaire.
+
+Exemple générique :
+logs-write -> logs-000123 avec is_write_index=true.
+
+Ce document ne décrit aucun incident payments particulier.

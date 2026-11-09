@@ -1,0 +1,10 @@
+Notes personnelles — équipe Elastic
+
+Pour ILM, commencer par _ilm/explain.
+Un alias qui existe n'est pas suffisant : le bon index doit être write index.
+
+INC-001 semblait initialement lié au disque mais le RCA a confirmé un problème
+de payments-write / is_write_index.
+
+Les incidents de watermark sont une famille différente : INC-002 et INC-010
+sont de bons exemples.

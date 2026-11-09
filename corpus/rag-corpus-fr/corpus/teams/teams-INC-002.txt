@@ -1,0 +1,10 @@
+Conversation Teams — 03/07/2026
+
+Nadia : customer-search est jaune, es-node-07 est presque plein.
+Marc : high watermark dépassé ?
+Nadia : oui.
+Marc : il y a des vieux index de test.
+Nadia : je demande validation avant suppression.
+
+Après validation applicative, les index de test ont été supprimés.
+Voir INC-002 pour le compte rendu final.

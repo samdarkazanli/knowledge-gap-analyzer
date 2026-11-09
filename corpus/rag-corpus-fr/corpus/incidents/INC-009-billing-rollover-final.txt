@@ -1,0 +1,12 @@
+Incident : INC-009
+Date : 02/09/2026
+Application : billing
+Système : Elasticsearch
+Statut : RÉSOLU
+
+billing-000076 ne faisait pas de rollover malgré un alias billing-write valide.
+
+Cause confirmée : le nom de l'index ne respectait plus le pattern numérique
+attendu pour le rollover après une création manuelle : billing-current.
+
+L'indexation a été rétablie vers billing-000076 et le rollover a fonctionné.

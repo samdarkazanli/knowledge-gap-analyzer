@@ -1,0 +1,15 @@
+Runbook : Pression disque Elasticsearch
+Version : 2.4
+Statut : ACTUEL
+
+Contrôler l'utilisation disque et les watermarks low, high et flood-stage.
+Un dépassement high peut limiter l'allocation de shards.
+Un dépassement flood-stage peut provoquer read_only_allow_delete.
+
+Avant suppression d'index :
+- identifier les index concernés ;
+- vérifier rétention et propriétaire applicatif ;
+- obtenir la validation requise ;
+- surveiller la reprise de l'allocation.
+
+Une pression disque ne doit pas être déduite d'un simple échec ILM.

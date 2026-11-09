@@ -1,0 +1,11 @@
+Incident : INC-007
+Date : 18/08/2026
+Application : payments-api
+Statut : RÉSOLU
+
+Pic de réponses HTTP 500 pendant 23 minutes.
+
+Cause confirmée : pool de connexions PostgreSQL épuisé après le déploiement
+payments-api 4.18.2. Un rollback applicatif a rétabli le service.
+
+Elasticsearch était sain pendant l'incident.

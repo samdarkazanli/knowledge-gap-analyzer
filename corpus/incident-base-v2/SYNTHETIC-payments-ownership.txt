@@ -1,0 +1,15 @@
+SYNTHETIC DOCUMENTATION IMPROVEMENT — FOR KGA VALIDATION ONLY
+
+Application: payments
+Responsible team: Payments Platform Team
+
+Ownership boundary:
+The Payments Platform Team owns operation and maintenance of the payments
+application. The Elasticsearch Platform Team owns the shared Elasticsearch
+service; it does not own payments application behavior or business logic.
+
+Escalation responsibilities:
+Operational issues affecting payments application behavior are escalated first
+to the Payments Platform Team. Issues confirmed to originate in the shared
+Elasticsearch service are then escalated by Payments Platform to the
+Elasticsearch Platform Team with incident context and diagnostic evidence.

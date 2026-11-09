@@ -1,0 +1,13 @@
+Conversation Teams — canal elastic-ops — 14/06/2026
+
+Alice 10:54 : payments est encore bloqué sur check-rollover-ready.
+Bob 10:55 : on a vérifié le disque ?
+Alice 10:56 : oui, rien d'anormal sur les watermarks.
+Bob 10:57 : regarde payments-write.
+Alice 11:01 : l'alias existe.
+Bob 11:02 : et le dernier index est bien son write index ?
+Alice 11:05 : non. payments-000184 n'a pas is_write_index=true.
+Alice 11:14 : corrigé + retry ILM. Le rollover passe.
+Bob 11:15 : parfait, à mettre dans le RCA.
+
+Conversation informelle ; se référer au rapport final pour la cause officielle.

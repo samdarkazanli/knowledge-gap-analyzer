@@ -1,0 +1,14 @@
+Incident: INC-002
+Date: 2026-07-03
+System: Elasticsearch
+Application: customer-search
+
+Node es-node-07 exceeded the high disk watermark.
+
+Shard allocation was affected and cluster health became yellow.
+
+Old test indices were removed after validation with the application team.
+Disk utilization returned below the high watermark and shard allocation
+recovered.
+
+This incident was unrelated to ILM rollover configuration.

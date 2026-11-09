@@ -1,0 +1,10 @@
+ARCHIVE — Runbook rollover v1
+Date : 2023
+Statut : OBSOLÈTE — NE PLUS UTILISER
+
+Ancienne recommandation :
+En cas de rollover bloqué et si l'espace disque semble élevé, supprimer les
+anciens index puis relancer ILM.
+
+Cette procédure a été remplacée. Elle ne demande pas suffisamment de vérifier
+rollover_alias et is_write_index. Utiliser RUNBOOK-ILM-rollover version 3.2.

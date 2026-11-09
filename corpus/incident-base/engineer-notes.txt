@@ -1,0 +1,12 @@
+Personal engineering notes
+
+For ILM problems always start with _ilm/explain.
+
+A previous payments incident looked complicated but turned out to be
+an alias configuration problem.
+
+Remember that an alias merely existing is not enough for rollover.
+The correct index must be the write index.
+
+Disk watermark incidents are a separate class of problem and should
+not automatically be treated as rollover failures.

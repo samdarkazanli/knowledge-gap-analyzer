@@ -1,0 +1,13 @@
+Elasticsearch ILM Rollover Runbook
+
+When an index remains in check-rollover-ready:
+
+1. Verify index.lifecycle.rollover_alias.
+2. Verify that the rollover alias exists.
+3. Verify that the current index is associated with the alias.
+4. Verify that the current index is configured as the write index.
+5. Check the is_write_index setting.
+6. Use the ILM explain API to inspect additional errors.
+
+Do not delete the index simply because rollover has failed.
+Determine the rollover configuration problem first.

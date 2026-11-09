@@ -1,0 +1,17 @@
+Incident: INC-001
+Date: 2026-06-14
+System: Elasticsearch
+Application: payments
+
+The payments index stopped rolling over.
+
+ILM remained in the check-rollover-ready step.
+
+Investigation found that the alias payments-write existed,
+but the current payments index was not configured as the
+write index.
+
+Setting is_write_index=true on the appropriate alias/index
+relationship restored rollover operation.
+
+Incident resolved at 16:42.

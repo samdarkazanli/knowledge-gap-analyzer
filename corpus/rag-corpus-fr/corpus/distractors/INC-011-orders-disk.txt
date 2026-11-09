@@ -1,0 +1,9 @@
+Incident : INC-011
+Date : 15/09/2026
+Application : orders
+Système : Elasticsearch
+
+Pression disque sur es-node-09 après croissance inattendue des logs orders.
+Le high watermark a été dépassé. Nettoyage validé et allocation rétablie.
+
+Aucun problème de rollover_alias.

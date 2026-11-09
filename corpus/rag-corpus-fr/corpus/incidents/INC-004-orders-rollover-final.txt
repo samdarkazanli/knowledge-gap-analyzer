@@ -1,0 +1,14 @@
+Incident : INC-004
+Date : 27/07/2026
+Application : orders
+Système : Elasticsearch
+Statut : RÉSOLU
+
+orders-logs-000092 ne faisait plus de rollover.
+L'alias orders-write était présent et correctement positionné comme write index.
+
+Cause confirmée : index.lifecycle.rollover_alias était absent du template
+orders-logs-template après CHG-041.
+
+La propriété a été restaurée dans le template puis ILM a été relancé.
+Ne pas confondre avec INC-001 : ici is_write_index était correct.

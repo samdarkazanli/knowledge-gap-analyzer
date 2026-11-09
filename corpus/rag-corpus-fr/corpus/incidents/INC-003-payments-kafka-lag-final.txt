@@ -1,0 +1,14 @@
+Incident : INC-003
+Date : 19/07/2026
+Application : payments
+Système : Kafka
+Statut : RÉSOLU
+
+Le consumer group payments-enricher présentait un lag supérieur à 1,8 million
+de messages sur le topic payments-events.
+
+Cause confirmée : deux consumers avaient quitté le groupe après une erreur
+d'authentification SASL. Le redémarrage avec les bons secrets a restauré la
+consommation.
+
+Aucun problème Elasticsearch, ILM ou payments-write n'a été constaté.

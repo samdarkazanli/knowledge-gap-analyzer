@@ -1,0 +1,15 @@
+Runbook : Diagnostic Elasticsearch ILM / rollover
+Version : 3.2
+Statut : ACTUEL
+
+Pour un index bloqué dans check-rollover-ready :
+1. Exécuter _ilm/explain.
+2. Vérifier index.lifecycle.rollover_alias.
+3. Vérifier que l'alias existe.
+4. Vérifier que l'index courant appartient à l'alias.
+5. Vérifier que l'index courant est le write index (is_write_index=true).
+6. Vérifier que le nom de l'index respecte le pattern attendu.
+7. Examiner les erreurs ILM avant toute action destructive.
+
+Ne pas supprimer des index uniquement parce qu'un rollover échoue.
+La pression disque doit être démontrée séparément.

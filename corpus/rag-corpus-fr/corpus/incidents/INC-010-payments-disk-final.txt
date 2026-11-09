@@ -1,0 +1,13 @@
+Incident : INC-010
+Date : 10/09/2026
+Application : payments
+Système : Elasticsearch
+Statut : RÉSOLU
+
+Le nœud es-node-18 hébergeant plusieurs shards payments a dépassé le high disk
+watermark. Des relocations ont été retardées.
+
+Cause confirmée : accumulation d'index de debug payments-debug-* conservés
+au-delà de leur durée prévue. Après validation, ces index ont été supprimés.
+
+INC-010 est bien un incident de pression disque, contrairement à INC-001.

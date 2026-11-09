@@ -1,0 +1,13 @@
+Incident : INC-008
+Date : 24/08/2026
+Application : customer-search
+Système : Elasticsearch
+Statut : RÉSOLU
+
+customer-search-logs-000311 restait dans ILM ERROR.
+
+Cause confirmée : la policy customer-search-retention avait été supprimée
+pendant un nettoyage de configuration. L'index référençait donc une policy
+inexistante.
+
+La policy a été restaurée puis ILM retry a été exécuté.

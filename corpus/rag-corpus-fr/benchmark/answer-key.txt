@@ -1,0 +1,43 @@
+ANSWER KEY — NE PAS IMPORTER DANS LE RAG
+
+Q01
+Sources essentielles : incidents/INC-001-payments-rollover-final.txt ; investigations/INC-001-investigation-preliminaire.txt
+Sources utiles : investigations/INC-001-diagnostic-1130.txt ; teams/teams-INC-001.txt ; notes/notes-ingenieur-elastic.txt
+Conclusion : cause confirmée = payments-000184 non déclaré write index de payments-write ; correction is_write_index=true. Pression disque = hypothèse préliminaire non confirmée.
+
+Q02
+Sources essentielles : incidents/INC-001-payments-rollover-final.txt ; teams/teams-INC-001.txt
+Distracteurs importants : distractors/INC-012-payments-write-timeout.txt ; obsolete/OLD-payments-architecture.txt
+Conclusion : payments-write est central dans INC-001, apparaît aussi dans INC-012 sans être fautif ; payments-write-v1 est obsolète.
+
+Q03
+Sources essentielles : investigations/INC-001-investigation-preliminaire.txt ; incidents/INC-001-payments-rollover-final.txt ; incidents/INC-002-customer-search-disk-final.txt ; incidents/INC-010-payments-disk-final.txt
+Conclusion : INC-001 non ; INC-002 oui ; INC-010 oui.
+
+Q04
+Sources essentielles : incidents/INC-004-orders-rollover-final.txt ; investigations/INC-004-preliminary.txt ; changes/CHG-041-orders-template.txt
+Conclusion : is_write_index a été suspecté puis écarté. Cause = disparition de index.lifecycle.rollover_alias du template après CHG-041.
+
+Q05
+Sources essentielles : notes/notes-payments-septembre.txt plus rapports concernés.
+Conclusion : INC-001 ILM/write index ; INC-003 Kafka SASL ; INC-005 agrégation/JVM ; INC-007 pool PostgreSQL ; INC-010 pression disque.
+
+Q06
+Source essentielle : runbooks/RUNBOOK-ILM-rollover.txt
+Conclusion : _ilm/explain, rollover_alias, existence/association alias, write index, pattern de nommage, erreurs ILM ; pas de suppression destructive sans preuve.
+
+Q07
+Sources essentielles : obsolete/OLD-RUNBOOK-rollover-v1.txt ; runbooks/RUNBOOK-ILM-rollover.txt
+Conclusion : non. Le document 2023 est explicitement OBSOLÈTE et remplacé par v3.2.
+
+Q08
+Sources essentielles : changes/CHG-041-orders-template.txt ; incidents/INC-004-orders-rollover-final.txt
+Conclusion : CHG-041 a retiré index.lifecycle.rollover_alias ; identifié comme origine de INC-004.
+
+Q09
+Source essentielle : distractors/INC-012-payments-write-timeout.txt
+Conclusion : l'alias est la cible des écritures mais est correctement configuré ; cause = saturation réseau inter-zones.
+
+Q10
+Source essentielle : distractors/INC-013-billing-disk-hypothesis.txt
+Conclusion : aucune cause confirmée dans le corpus. Le bon comportement est d'indiquer que l'information est insuffisante, sans transformer l'hypothèse disque en fait.

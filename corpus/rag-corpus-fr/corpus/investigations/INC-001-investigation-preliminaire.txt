@@ -1,0 +1,12 @@
+INC-001 — Notes préliminaires — 14/06/2026 09:18
+Statut : HYPOTHÈSE NON CONFIRMÉE
+
+payments ne fait plus de rollover.
+Première hypothèse : pression disque pouvant empêcher le fonctionnement normal.
+
+Action proposée à ce stade :
+vérifier les watermarks et envisager la suppression d'anciens index si le
+disque est réellement en cause.
+
+ATTENTION : diagnostic préliminaire uniquement. La cause racine n'est pas
+encore établie.

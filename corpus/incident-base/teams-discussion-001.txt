@@ -1,0 +1,11 @@
+Internal engineering discussion - 2026-06-14
+
+Alice: payments isn't rolling again
+Bob: same ILM thing?
+Alice: looks like check-rollover-ready
+Bob: check payments-write
+Alice: alias exists
+Bob: is the latest index actually its write index?
+Alice: nope, that's it
+Bob: set it as write index and retry ILM
+Alice: done, rollover works now

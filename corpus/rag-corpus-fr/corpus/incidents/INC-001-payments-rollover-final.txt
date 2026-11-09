@@ -1,0 +1,19 @@
+Incident : INC-001
+Date : 14/06/2026
+Application : payments
+Système : Elasticsearch
+Statut : RÉSOLU — rapport final
+
+Symptôme :
+L'index payments reste bloqué dans l'étape ILM check-rollover-ready.
+
+Cause confirmée :
+L'alias payments-write existe, mais l'index courant payments-000184 n'est pas
+déclaré comme index d'écriture de cet alias.
+
+Correction :
+La relation alias/index a été corrigée avec is_write_index=true.
+Après relance d'ILM, le rollover s'est exécuté normalement.
+
+Résolution confirmée à 16:42.
+La pression disque n'est pas identifiée comme cause de cet incident.

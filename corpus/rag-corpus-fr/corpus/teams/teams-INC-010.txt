@@ -1,0 +1,8 @@
+Conversation Teams — 10/09/2026
+
+Paul : payments a encore un sujet disque sur node18.
+Sarah : attention, ce n'est pas INC-001, le rollover fonctionne.
+Paul : confirmé. high watermark + beaucoup de payments-debug-*.
+Sarah : suppression uniquement après validation.
+
+Discussion informelle liée à INC-010.

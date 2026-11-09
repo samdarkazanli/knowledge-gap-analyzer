@@ -1,0 +1,10 @@
+INC-004 — Investigation initiale
+
+orders-logs ne fait plus de rollover.
+Un ingénieur suspecte d'abord un problème similaire à INC-001 et propose de
+contrôler is_write_index sur orders-write.
+
+La vérification montre ensuite que orders-write est correctement configuré.
+Il faut poursuivre l'analyse du template et de index.lifecycle.rollover_alias.
+
+Hypothèse initiale non confirmée.

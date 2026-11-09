@@ -1,0 +1,12 @@
+Incident : INC-012
+Date : 18/09/2026
+Application : payments
+Système : Elasticsearch
+
+Des écritures vers l'alias payments-write ont subi des timeouts pendant
+7 minutes.
+
+Cause confirmée : saturation réseau entre deux zones du datacenter.
+L'alias payments-write était correctement configuré et is_write_index=true.
+
+Le terme payments-write apparaît ici mais la cause n'est pas ILM.

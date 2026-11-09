@@ -1,0 +1,13 @@
+BENCHMARK RAG — QUESTIONS
+Ne pas importer ce dossier benchmark dans Open WebUI.
+
+Q01. Quelle est la cause confirmée de INC-001 et quelle hypothèse préliminaire avait été envisagée ?
+Q02. Que sait-on de l'identifiant exact payments-write ? Distinguer les contextes pertinents et les distracteurs.
+Q03. La pression disque est-elle la cause de INC-001, INC-002 et INC-010 ? Distinguer hypothèses et causes confirmées.
+Q04. Pour INC-004, le problème était-il is_write_index ? Quelle est la cause confirmée ?
+Q05. Quels incidents payments ont des causes différentes et lesquelles ?
+Q06. Quelle procédure actuelle faut-il suivre pour un index bloqué dans check-rollover-ready ?
+Q07. Une ancienne documentation recommande de supprimer des index lors d'un rollover bloqué. Cette recommandation est-elle encore valide ?
+Q08. Quelle relation existe entre CHG-041 et INC-004 ?
+Q09. Pourquoi payments-write apparaît-il dans INC-012 et est-ce la cause de l'incident ?
+Q10. Quelle est la cause confirmée de INC-013 ?

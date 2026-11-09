@@ -1,0 +1,7 @@
+Runbook : Investigation HTTP 500
+Version : 1.5
+
+Corréler taux de 500, déploiements, saturation des pools, dépendances et logs.
+Ne pas attribuer automatiquement un pic de 500 à Elasticsearch.
+
+Le cas payments-api INC-007 provenait du pool PostgreSQL après déploiement.

@@ -1,0 +1,7 @@
+ARCHIVE — Architecture payments 2024
+Statut : OBSOLÈTE
+
+L'ancien cluster utilisait l'alias payments-write-v1.
+Depuis la migration 2025, l'alias actif est payments-write.
+
+Ne pas utiliser payments-write-v1 pour diagnostiquer les incidents actuels.

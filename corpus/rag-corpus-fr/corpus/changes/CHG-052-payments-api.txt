@@ -1,0 +1,9 @@
+Changement : CHG-052
+Date : 18/08/2026
+Application : payments-api
+
+Déploiement version 4.18.2 à 09:00.
+Une nouvelle configuration du pool PostgreSQL a réduit le nombre de connexions
+disponibles. Rollback effectué pendant INC-007.
+
+Ce changement n'affecte ni payments-write ni ILM.

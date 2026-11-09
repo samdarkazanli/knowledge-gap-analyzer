@@ -1,0 +1,10 @@
+Notes exploitation payments — septembre 2026
+
+Plusieurs incidents récents portent le mot payments mais n'ont pas la même cause :
+INC-001 : configuration ILM / write index.
+INC-003 : lag Kafka.
+INC-005 : JVM pressure.
+INC-007 : pool PostgreSQL.
+INC-010 : pression disque.
+
+Toujours partir de l'identifiant d'incident et des preuves techniques.

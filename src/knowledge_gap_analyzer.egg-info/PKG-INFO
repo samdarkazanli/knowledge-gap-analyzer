@@ -1,0 +1,572 @@
+Metadata-Version: 2.4
+Name: knowledge-gap-analyzer
+Version: 0.2.7
+Summary: Discover internal concepts and generate company-specific knowledge questions.
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: openai<4,>=1.42
+Requires-Dist: pydantic<3,>=2
+Provides-Extra: test
+Requires-Dist: pytest<10,>=8; extra == "test"
+
+# Knowledge Gap Analyzer
+
+KGA V0.2.7 discovers and classifies concepts in an internal technical
+documentation corpus, then generates knowledge questions for experienced
+engineers who are unfamiliar with the organization's environment and evaluates
+whether those questions are answered by the corpus. Concept
+extraction reads UTF-8 Markdown, text, and AsciiDoc files, sends line-addressable
+passages to an explicitly configured OpenAI-compatible API, validates every
+returned quotation against the local source, deduplicates the results, and
+writes JSON and CSV reports.
+
+Question generation is deterministic and offline. It targets supported
+company-specific concept types, retains their source evidence, and does not
+claim that a question is unanswered. Answerability evaluation is a separate,
+evidence-grounded LLM stage. V0.2.7 does not use semantic retrieval, infer
+business impact, or build a knowledge graph.
+
+## Requirements and installation
+
+KGA requires Python 3.10 or newer. Install it in a virtual environment:
+
+```bash
+python -m venv .venv
+.venv/bin/python -m pip install -e '.[test]'
+```
+
+## Configuration
+
+Set the API key and model in the environment. `OPENAI_BASE_URL` is optional and
+selects an OpenAI-compatible endpoint; when omitted, the client uses its normal
+OpenAI default.
+
+```bash
+export OPENAI_API_KEY='...'
+export KGA_MODEL='your-model-id'
+export OPENAI_BASE_URL='https://your-endpoint.example/v1'  # optional
+```
+
+Optional safety and transport settings are:
+
+- `KGA_MAX_API_CALLS` (default: `100`)
+- `KGA_API_TIMEOUT_SECONDS` (default: `30`)
+- `KGA_API_MAX_RETRIES` (default: `2`)
+- `KGA_MODEL_CONTEXT_TOKENS` (evaluation default: `128000`)
+- `KGA_EVALUATION_OUTPUT_TOKENS` (evaluation reserve: `4096`)
+
+KGA does not log or include the API key in its reports. Corpus passages are
+transmitted only to the endpoint configured above.
+
+## Concept extraction
+
+Inspect the amount of work without creating a client or sending documents:
+
+```bash
+kga --corpus ./corpus --dry-run --max-api-calls 100
+```
+
+Run concept extraction:
+
+```bash
+kga --corpus ./corpus --output ./output
+```
+
+Useful command-line controls include:
+
+- `--model MODEL` overrides `KGA_MODEL`.
+- `--max-documents N` processes only the first `N` documents in stable path
+  order.
+- `--max-api-calls N` overrides the configured request limit.
+
+The output directory contains:
+
+- `concepts.json`: structured concepts with categories and source evidence.
+- `concepts.csv`: one row per concept/evidence pair.
+- `execution-summary.json`: document, passage, API-call, and category counts.
+
+The same execution summary is printed to standard output after a successful
+run. Errors are written to standard error and return a non-zero exit status.
+
+## Knowledge question generation
+
+Generate questions from the `concepts.json` produced by extraction:
+
+```bash
+kga-questions --concepts ./output/concepts.json --output ./output
+```
+
+This step makes no API calls and requires no model or API credentials. It
+generates type-relevant questions for company-specific applications,
+identifiers, incidents, configurations, and procedures. General technical and
+uncertain concepts are not treated as organization-specific knowledge targets.
+Unsupported concept types are skipped rather than padded with generic
+questions.
+
+Questions are atomic: each asks about one independently assessable knowledge
+requirement. Incident questions therefore separate identification, impact,
+cause, diagnosis, and resolution. Application and configuration questions also
+separate relationships and individual operational concerns such as deployment,
+monitoring, maintenance, valid values, and safe changes.
+
+Procedure concepts are interpreted deterministically using their name,
+description, and evidence. Generic linguistic cues distinguish:
+
+- named procedures and runbooks, which receive purpose and documented-step
+  questions;
+- operational instructions, which receive a rationale question;
+- remediation actions, which receive separate prerequisite and outcome
+  questions;
+- safety recommendations, which receive a question about why the action should
+  be avoided.
+
+This classification is domain-independent and conservative. Ambiguous
+procedure phrases fall back to named-procedure questions; no claim is made that
+the supporting evidence answers a generated question.
+
+The output directory receives:
+
+- `questions.json`: questions with stable IDs, dimensions, originating concept
+  metadata, and supporting evidence.
+- `questions.csv`: one row per question/evidence pair.
+
+The original extraction files are left unchanged, so the complete workflow can
+use one output directory for both stages.
+
+## Corpus-wide answerability evaluation
+
+Evaluate generated questions against all supported documents in a corpus:
+
+```bash
+kga-evaluate \
+  --questions ./output/questions.json \
+  --corpus ./corpus/incident-base \
+  --output ./output/evaluation
+```
+
+Evaluation uses the same `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `KGA_MODEL`
+configuration as extraction. `--model`, `--max-questions`, and
+`--max-api-calls` provide per-run overrides. Inspect request sizes without
+initializing a client or making API calls:
+
+```bash
+kga-evaluate \
+  --questions ./output/questions.json \
+  --corpus ./corpus/incident-base \
+  --max-api-calls 50 \
+  --dry-run
+```
+
+Every question is evaluated against the complete corpus. Documents are rendered
+with source paths and absolute line numbers, and all returned supporting and
+conflicting quotations are checked against the original loaded content. KGA
+never silently truncates the corpus or switches to retrieval. If the complete
+request plus output reserve exceeds `KGA_MODEL_CONTEXT_TOKENS`, that question is
+reported as `evaluation_error` without an API call. The byte-based size estimate
+is deliberately conservative and can be overridden with
+`--context-window-tokens` for the configured model.
+
+Citation validation remains exact: source paths must exist, line ranges must be
+valid, and each quotation must occur verbatim within its declared lines. KGA
+does not fuzzy-match, rewrite, or silently repair evidence. If a provider's
+first response fails citation validation, KGA retries that question once with
+structured correction feedback while preserving the original question and full
+corpus. Other failures are not retried automatically.
+
+The retry consumes another API call and `--max-api-calls` remains a strict upper
+bound. When no budget remains, no retry request is sent and the result stays
+`evaluation_error`. Failed retries are never converted to `unanswered`.
+Per-result diagnostics contain only citation metadata by default:
+
+- `question_id`
+- `source_path`
+- `declared_start_line` and `declared_end_line`
+- `failure_reason`
+- `evidence_field`
+- `attempt_number`
+
+They do not copy the rejected quotation or surrounding document content.
+
+Evaluation statuses are `answered`, `partially_answered`, `unanswered`,
+`conflicting_evidence`, `uncertain`, and `evaluation_error`. The evaluator is
+instructed to distinguish confirmed facts from preliminary hypotheses,
+unverified or outdated statements, and contradictions. In particular, a
+speculative cause cannot answer a confirmed-cause question.
+
+The rubric is deliberately conservative. A concept name does not establish its
+purpose; association does not establish interaction; and an incident-specific
+operation does not establish a complete ongoing process. Relevant but
+insufficient evidence is `partially_answered`, with the limitation stated in the
+answer. Preliminary and later confirmed findings are interpreted using
+documented chronology rather than treated as contradictions automatically.
+
+The evaluation directory contains:
+
+- `answerability.json`: structured results with question/concept metadata,
+  answers, explanations, confidence, and validated evidence.
+- `answerability.csv`: the same results in tabular form, with evidence encoded
+  as JSON arrays.
+- `evaluation-summary.json`: counts by status, knowledge dimension, and concept
+  category, plus API-call and technical-error totals. It also reports total
+  evaluation attempts, questions requiring retry, successful and failed
+  retries, retries skipped for API budget, and evidence-validation failures.
+- `evaluation-run.json`: corpus/question snapshot identities, model and prompt
+  versions, non-secret configuration, timestamps, and execution statistics.
+- `formal-evaluations.json`: stable evaluation identities linked to the run and
+  the existing answerability results.
+
+Evaluation determines answerability against the supplied corpus, not universal
+factual truth. Classification remains model-assessed, and an exact citation can
+support only the text it actually states. A corrected retry may still fail, and
+full-corpus evaluation remains limited by the configured context window. KGA
+does not perform retrieval, knowledge-gap prioritization, documentation
+generation, or external-system integration.
+
+The evidence-retry and rubric refinements requested as V0.2.1a and V0.2.1b are
+packaged as V0.2.2. This avoids the PEP 440 meaning of `0.2.1b` as a beta
+prerelease older than the already released V0.2.1.
+
+## Formal knowledge model
+
+V0.2.3 adds an offline formalization stage without replacing the operational
+models used by extraction, question generation, or evaluation:
+
+```bash
+kga-model \
+  --concepts ./output/concepts.json \
+  --questions ./output/questions.json \
+  --output ./output/model
+```
+
+The formal entities and relationships are:
+
+- **Document**: identified by corpus-relative path plus its SHA-256 content
+  fingerprint.
+- **Evidence**: an exact source path, line range, and quotation, optionally
+  linked to a formal document.
+- **Concept**: a normalized/category/type identity linked to evidence IDs.
+- **KnowledgeRequirement**: one independently assessable statement of what
+  should be known, linked to exactly one concept and one or more questions.
+- **Question**: the existing atomic question enriched with `concept_id` and
+  `requirement_id`; a question is an assessment mechanism, not proof that the
+  requirement is satisfied.
+- **Evaluation**: an existing answerability result assigned a stable identity
+  within an evaluation run.
+- **EvaluationRun**: model, corpus snapshot, question-set snapshot, evaluator
+  and prompt versions, non-secret configuration, timestamps, and statistics.
+
+Requirements retain the existing broad knowledge dimension and add a precise
+domain-independent requirement type such as ownership, dependencies,
+deployment, monitoring, maintenance, troubleshooting, or incident cause.
+Types are applied only when deterministic question structure establishes them.
+Questions with the same broad dimension are not merged when they request
+different facts. Exact canonical equivalence is the only automatic grouping;
+ambiguous cases remain separate.
+
+### Stable identifiers
+
+Formal IDs use canonical JSON serialization and SHA-256, never Python's
+randomized `hash()`, output paths, or generation timestamps. Concept identity
+includes organizational category, concept type, normalized name, and evidence
+identities so two unrelated same-named entities are not merged by display name
+alone. Corpus snapshots use sorted relative paths and document fingerprints;
+question-set snapshots use the complete legacy question payload in stable ID
+order. Existing `question_id` values are preserved unchanged. Evaluation-run
+identity is separate and may incorporate its explicitly recorded start time.
+
+### Integrity and migration
+
+`kga-model` loads existing `concepts.json` and `questions.json` files directly.
+It writes new files and never edits the originals:
+
+- `knowledge-requirements.json`
+- `questions-enriched.json`
+- `formal-concepts.json`
+- `formal-evidence.json`
+- `model-manifest.json`
+
+The command rejects duplicate IDs, missing or ambiguous concept links, question
+evidence not linked to its concept, missing requirement/question references,
+and questions that do not belong to exactly one requirement. Diagnostics are
+reported rather than silently repairing or discarding data. Repeated runs over
+unchanged inputs produce byte-identical model artifacts.
+
+This is a model foundation, not a graph database or gap report. It does not
+infer facts, decide that a requirement is satisfied, score gaps, perform
+retrieval, or add persistence infrastructure. Evidence-to-document IDs remain
+optional when formalizing legacy inventories without the corpus; their original
+source paths and line ranges are always retained.
+
+The feature requested as V0.2.1c is packaged as V0.2.3, continuing the existing
+PEP 440-compatible patch-version sequence.
+
+## Knowledge-gap reporting
+
+V0.2.4 adds the V0.2.2 offline reporting stage. It joins an existing formal
+model to an existing answerability evaluation by stable `question_id` only:
+
+```bash
+kga-report \
+  --model ./output/formal-model-v021c \
+  --evaluation ./output/evaluation-v021-full \
+  --output ./output/knowledge-gap-report-v022
+```
+
+The command writes `requirement-coverage.json`, `knowledge-gaps.json`,
+`gap-summary.json`, `knowledge-gap-report.md`, and `report-manifest.json`.
+Unanswered, partially answered, conflicting, and uncertain results become
+explicit, partial, conflicting-knowledge, and uncertain-coverage gaps.
+Answered requirements create no gap. Missing evaluations are reported as
+`not_evaluated`, while technical evaluation errors remain anomalies and are
+never converted into documentation gaps.
+
+Requirement counts are not inflated when several questions assess one
+requirement. If all question evaluations agree, their evidence is combined.
+If statuses disagree, the requirement is conservatively marked uncertain for
+review; any evaluation error remains an anomaly. Duplicate evaluation records,
+unknown or mismatched questions, broken model references, and incompatible
+question-set provenance are rejected. Legacy evaluation directories without
+`evaluation-run.json` remain supported with a manifest warning; `--strict`
+requires that provenance file and a matching question-set identity.
+
+Evaluation coverage is the percentage of all requirements having a usable
+evaluation (excluding missing and technically failed evaluations).
+Answerability coverage is the percentage of usable evaluations that are fully
+answered. These metrics use different documented denominators and are not a
+single completeness score. Statistics are also grouped by concept, category,
+type, dimension, and requirement type.
+
+Gap IDs are SHA-256-based deterministic identifiers derived from the formal
+requirement and gap type. The four analytical outputs are byte-identical for
+identical inputs. The manifest intentionally varies because it records a UTC
+generation timestamp; it also records input SHA-256 fingerprints, model and
+question-set identities, optional evaluation-run identity, counts, settings,
+and compatibility warnings. Files are serialized before publication and
+written through temporary files, so input-validation failures do not leave a
+partial report.
+
+The report measures coverage of the explicitly modeled requirements against
+the supplied evaluated corpus. It does not discover implicit requirements,
+claim that knowledge is absent from the organization, assign priorities or
+scores, reprocess the corpus, use retrieval, or call an LLM.
+
+## Gap consolidation and remediation planning
+
+V0.2.5 packages the V0.2.3 deterministic consolidation stage. It consumes a
+complete V0.2.2 report without re-running evaluation or calling an external
+service:
+
+```bash
+kga-consolidate \
+  --report ./output/gap-report-v022-v021b \
+  --output ./output/consolidation-v023
+```
+
+An optional `--config` JSON file can override `priority_by_gap_type`; it must
+provide `high`, `medium`, or `low` for every V0.2.2 gap type. Priorities are
+provisional policy labels. They do not infer application criticality, business
+impact, or incident causation from names or wording.
+
+The stage writes:
+
+- `consolidated-gaps.json`: versioned consolidated gap entities and complete
+  membership links to source gaps, requirements, questions, concepts,
+  evaluations, and evidence.
+- `remediation-plan.json`: deterministic proposals describing information to
+  collect and documentation to create, without supplying missing answers.
+- `remediation-plan.md`: a readable plan with traceable source references.
+- `consolidation-summary.json`: input fingerprints, source/group counts,
+  duplicate-representation count, priority and method distributions, and
+  inherited validation warnings.
+
+Automatic equivalence is intentionally narrow. Findings consolidate only when
+they reference the same formal requirement and agree on concept, dimension,
+requirement type, gap semantics, and question membership. Shared dimensions,
+similar text, or matching concept names do not prove equivalence. Findings
+that cannot be safely merged remain valid singleton groups. Consolidation may
+remove duplicate representations; it never claims to eliminate the underlying
+knowledge gap.
+
+Consolidated and remediation IDs use canonical SHA-256 identities and do not
+depend on input order, timestamps, or random values. All outputs are
+deterministic for identical inputs. Malformed artifacts, duplicate identifiers,
+broken requirement/question links, incompatible statuses, and unsupported
+report schema versions are rejected before output is written. Legacy
+evaluation provenance warnings from V0.2.2 are retained without strengthening
+the original provenance claim.
+
+This stage does not perform fuzzy matching, clustering, retrieval, embeddings,
+implicit gap discovery, business-impact scoring, or factual remediation. Human
+validation remains required for every proposed documentation action.
+
+## Human review and approval
+
+V0.2.6 packages the V0.2.4 offline review workflow. Human decisions live in a
+separate snapshot-bound workspace; the consolidation and remediation artifacts
+remain immutable inputs.
+
+Initialize a workspace:
+
+```bash
+kga-review-init \
+  --consolidation ./output/consolidation-v023 \
+  --output ./output/review-v024
+```
+
+This creates `review-manifest.json`, `gap-reviews.json`,
+`remediation-reviews.json`, `consolidation-reviews.json`, and
+`review-guide.md`. Every gap and remediation starts as `pending`, and the
+equivalence list starts empty. Initialization never assigns a reviewer or
+approval and refuses to overwrite an existing directory, including one with
+draft human edits.
+
+Gap decisions are `pending`, `confirmed`, `rejected`, and `deferred`.
+Remediation decisions are `pending`, `approved`, `rejected`, and `deferred`.
+Every non-pending decision requires a reviewer, a timezone-aware ISO 8601
+timestamp, and a nonempty comment. An approved remediation additionally
+requires its linked gap to be confirmed. An optional approved
+`priority_override` can be `high`, `medium`, or `low`; the original machine
+priority is retained alongside the effective human-approved priority.
+
+Validate after editing:
+
+```bash
+kga-review-validate \
+  --consolidation ./output/consolidation-v023 \
+  --review ./output/review-v024
+```
+
+Validation checks schema versions, exact consolidation fingerprints, stable
+workspace identity, record uniqueness and completeness, references, human
+metadata, approval consistency, and equivalence groups. Pending, deferred, and
+unapproved work produces warnings, not errors, so a fully pending workspace is
+valid. Snapshot mismatches, missing reviews, broken references, and invalid
+approvals return a nonzero exit code. The machine-readable JSON result includes
+decision counts, errors, warnings, and inherited provenance limitations.
+
+Equivalence reviews contain two or more explicit consolidated gap IDs and use
+`proposed`, `confirmed_equivalent`, or `rejected_equivalence`. Confirmed or
+rejected decisions require human metadata and rationale. All members of a
+confirmed equivalence must be confirmed gaps. Overlapping active groups are
+rejected for explicit resolution; transitive equivalence is never inferred and
+confirmed equivalences never silently combine remediation tasks.
+
+Export validated approvals:
+
+```bash
+kga-review-export \
+  --consolidation ./output/consolidation-v023 \
+  --review ./output/review-v024 \
+  --output ./output/approved-plan-v024
+```
+
+The export contains `approved-remediations.json`, `approved-remediations.md`,
+`review-summary.json`, `reviewed-equivalences.json`, and
+`review-export-manifest.json`. Only approved proposals linked to confirmed gaps
+are included. Each record retains the machine recommendation and provisional
+priority separately from reviewer identity, timestamp, comment, effective
+priority, source gap IDs, questions, requirements, and evidence. A workspace
+with no approvals produces a valid empty plan.
+
+Semantic IDs and analytical exports are deterministic for unchanged inputs.
+The export manifest alone contains a variable generation timestamp. It binds
+the result to consolidation and review-file fingerprints and carries forward
+validation warnings. This workflow provides an auditable file-based review; it
+does not provide authentication, signatures, concurrent editing, access
+control, deadlines, external workflow integration, semantic merging, or
+business-criticality inference.
+
+## Documentation remediation execution and verification
+
+V0.2.7 packages the V0.2.5 workflow that turns human-approved remediation
+proposals into documentation tasks, tracks declared file changes, and compares
+baseline and updated answerability evaluations. These remain separate entities:
+an approved proposal creates a task, a contributor declares a change, file
+validation verifies provenance, and only evaluation comparison can classify a
+remediation outcome.
+
+Generate tasks only from approved remediations:
+
+```bash
+kga-tasks \
+  --approved-plan ./output/approved-plan-v024-test \
+  --output ./output/documentation-tasks-v025
+```
+
+The command writes `documentation-tasks.json`, `documentation-tasks.md`, and
+`task-manifest.json`. Stable task IDs derive from remediation, consolidated-gap,
+requirement, and question IDs. Tasks retain the machine recommendation, human
+reviewer, approval timestamp and rationale, effective priority, source gaps,
+and evidence. Acceptance criteria request explicit documentation for the
+existing questions without inventing answers.
+
+Initialize and validate file-based change declarations:
+
+```bash
+kga-changes-init \
+  --tasks ./output/documentation-tasks-v025 \
+  --output ./output/documentation-changes-v025
+
+kga-changes-validate \
+  --tasks ./output/documentation-tasks-v025 \
+  --changes ./output/documentation-changes-v025 \
+  --corpus ./output/incident-base-v025-updated
+```
+
+Each task starts with a `pending` change. A contributor changes it to
+`declared`, supplies a timezone-aware timestamp and description, and lists
+created or modified corpus-relative POSIX paths. Validation rejects traversal,
+absolute paths, unsupported files, missing files, changed task snapshots, and
+duplicate records. Validated files receive SHA-256 fingerprints. File existence
+does not mark a task complete or a gap resolved.
+
+Produce the updated evaluation with the existing evaluator and the original
+question inventory—never regenerate questions for verification:
+
+```bash
+kga-evaluate \
+  --questions ./output/questions-v020-refined/questions.json \
+  --corpus ./output/incident-base-v025-updated \
+  --output ./output/evaluation-v025-updated
+```
+
+Then compare evaluations offline:
+
+```bash
+kga-verify \
+  --tasks ./output/documentation-tasks-v025 \
+  --changes ./output/documentation-changes-v025 \
+  --baseline-evaluation ./output/evaluation-v021b-full \
+  --updated-evaluation ./output/evaluation-v025-updated \
+  --baseline-corpus ./corpus/incident-base \
+  --updated-corpus ./output/incident-base-v025-updated \
+  --output ./output/verification-v025
+```
+
+Verification writes `remediation-outcomes.json`, `remediation-outcomes.md`,
+`verification-summary.json`, and `verification-manifest.json`. It requires
+stable question identity, validates evidence against the corresponding corpus,
+checks corpus snapshots when evaluation-run provenance exists, and preserves
+both baseline and updated answers, explanations, statuses, and evidence.
+
+Outcome precedence is deterministic. Missing evaluations, technical errors,
+uncertain or conflicting results, missing run provenance, or unverified changes
+produce `inconclusive`. For comparable results, any regression takes
+precedence; all target questions answered is `resolved`; improvement with a
+remaining partial or unanswered target is `partially_resolved`; otherwise the
+result is `unresolved`. No confidence score is invented.
+
+Analytical outputs and semantic IDs are deterministic; manifests may contain
+generation timestamps. This version has no Git integration, database, web UI,
+automatic documentation writing, task completion inference, new evaluator,
+semantic matching, or business-criticality inference. Legacy evaluations
+without `evaluation-run.json` remain loadable but cannot prove resolution and
+therefore yield inconclusive outcomes.
+
+## Development
+
+Run the unit tests with:
+
+```bash
+.venv/bin/pytest -q
+```

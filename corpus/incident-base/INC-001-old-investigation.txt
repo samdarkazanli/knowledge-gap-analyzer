@@ -1,0 +1,10 @@
+Incident: INC-001
+Preliminary investigation notes
+
+The payments rollover problem may be caused by disk pressure.
+
+Initial recommendation:
+delete old indices to reduce disk usage.
+
+NOTE: Preliminary investigation only.
+Root cause has not yet been confirmed.

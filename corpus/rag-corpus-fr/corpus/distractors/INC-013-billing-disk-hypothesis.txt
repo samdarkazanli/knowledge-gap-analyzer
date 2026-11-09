@@ -1,0 +1,7 @@
+INC-013 — Note d'investigation
+
+billing présente des erreurs d'écriture.
+La pression disque est envisagée comme hypothèse initiale.
+
+Après vérification, aucun watermark n'est dépassé. L'investigation continue.
+Ce document ne contient pas de cause confirmée.

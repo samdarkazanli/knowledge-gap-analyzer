@@ -1,0 +1,8 @@
+Runbook : Kafka consumer lag
+Version : 1.8
+
+Contrôler le consumer group, les partitions, les membres actifs, les erreurs
+d'authentification et le débit producteur/consommateur.
+
+Un lag Kafka payments n'implique pas une panne Elasticsearch.
+Pour INC-003, la cause était l'authentification SASL des consumers.
